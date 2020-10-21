@@ -1,0 +1,21 @@
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "description": "Docker composer bug",
+  "main": "server/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server",
+    "nodemon": "nodemon --exec npm start"
+  },
+  "keywords": [
+    "compose",
+    "volume",
+    "bug"
+  ],
+  "author": "Thiago lagden",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "2.0.6"
+  }
+}

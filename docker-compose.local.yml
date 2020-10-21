@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  app:
+    # user: ${USER_ID}:${GROUP_ID}
+    user: ${USER_ID}:${USER_ID}
+    tty: true
+    build:
+      context: ./
+      args:
+        NODE_ENV: ${NODE_ENV}
+        USER_ID: ${USER_ID}
+        # o grupo tem que ser igual o id do user
+        GROUP_ID: ${USER_ID}
+    command: >
+      /bin/ash -c "
+        npm run nodemon
+      "
+    volumes:
+      - ${CURR_FOLDER}:/home/node/app
+      - /home/node/app/node_modules

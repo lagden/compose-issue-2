@@ -1,0 +1,81 @@
+#!/bin/bash
+
+DIR="$( cd -P "$( dirname "$0" )" && pwd )"
+
+# Import functions
+. $DIR/_fn
+
+usage() {
+	cat <<-EOF
+
+  Usage: $0 [options]
+
+  Options:
+    -i      ignore image building
+    -d      Run containers in the background
+    -h      Show usage
+
+EOF
+exit 0
+}
+
+# Go to project root
+cd $DIR
+cd ..
+
+CURR_FOLDER="$( pwd )"
+BUILD=1
+DETACH=""
+OPT="development"
+USER_ID="$( id -u )"
+GROUP_ID="$( id -g )"
+ARG_ENTR_INOTIFY_WORKAROUND=`test $(uname) = 'Linux' && echo 0 || echo 1`
+
+while getopts ":id" o
+do
+	case ${o} in
+		i) BUILD=0 ;;
+		d) DETACH="-d" ;;
+		*) usage ;;
+	esac
+done
+
+# ENV File
+load_env $CURR_FOLDER $OPT
+
+## Build
+TAG_IMAGE="${REGISTRY}/${IMAGE}:${VERSION}"
+
+if test $BUILD -eq 1; then
+	# --build-arg USER_ID=${USER_ID} \
+	# --build-arg GROUP_ID=${USER_ID} \
+	docker build \
+		--build-arg NODE_ENV=${NODE_ENV} \
+		--build-arg APP_ENV=${APP_ENV} \
+		--build-arg APP_NS=${APP_NS} \
+		--build-arg VERSION=${VERSION} \
+		--build-arg ENTR_INOTIFY_WORKAROUND=${ENTR_INOTIFY_WORKAROUND} \
+		--compress \
+		--force-rm \
+		--no-cache . \
+		--tag $TAG_IMAGE
+
+	test $? -ne 0 && abort "Falha no build da image --> ${build}" || ok "Build image ok --> ${build}"
+fi
+
+# --user "${USER_ID}:${USER_ID}" \
+# --privileged \
+docker run \
+	--name ${APP_NS}_${OPT} \
+	--rm \
+	--env ENTR_INOTIFY_WORKAROUND=${ENTR_INOTIFY_WORKAROUND} \
+	--env-file ${CURR_FOLDER}/.env-base \
+	--env-file ${CURR_FOLDER}/.env-${OPT} \
+	-v ${CURR_FOLDER}:/home/node/app \
+	-v /home/node/app/node_modules \
+	-p ${PORT_PUBLISHED}:${PORT} \
+	$DETACH \
+	$TAG_IMAGE \
+	/bin/ash -c "bin/watch -e development"
+
+exit 0

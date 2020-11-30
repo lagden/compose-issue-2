@@ -8,7 +8,7 @@ const {
 } = process.env
 
 const server = http.createServer((req, res) => {
-	res.end('ok')
+	res.end('good.')
 })
 
 server.on('clientError', (error, socket) => {
